@@ -18,6 +18,7 @@ import {
 } from "date-fns";
 import { ChevronLeft, ChevronRight, PencilLine } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useCalendarStore } from "@/lib/calendar-store";
 
 type PolaroidScene = {
@@ -26,13 +27,37 @@ type PolaroidScene = {
   gradient: string;
 };
 
+type Season = "winter" | "spring" | "summer" | "autumn";
+
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const seasonalImageMap: Record<Season, string> = {
+  winter: "/Winter.png",
+  spring: "/sakura.png",
+  summer: "/Summer.png",
+  autumn: "/Autumn.png"
+};
+
+const seasonByMonth: Season[] = [
+  "winter",
+  "winter",
+  "spring",
+  "spring",
+  "spring",
+  "summer",
+  "summer",
+  "summer",
+  "autumn",
+  "autumn",
+  "autumn",
+  "winter"
+];
 
 const sceneSet = (monthLabel: string): PolaroidScene[] => [
   {
     id: "sunset",
     caption: "Golden Hour",
-    gradient: "bg-[linear-gradient(180deg,#2c2a2a_0%,#676161_28%,#a39a8f_60%,#dfd2c4_100%)]"
+    gradient: "bg-[linear-gradient(180deg,#d4734e_55%,#f0a85e_80%,#f5d498_100%)]"
   },
   {
     id: "forest",
@@ -68,8 +93,46 @@ export function CalendarWall() {
   const [saved, setSaved] = useState(false);
 
   const monthDate = useMemo(() => parse(currentMonth, "yyyy-MM", new Date()), [currentMonth]);
+  const season = seasonByMonth[monthDate.getMonth()];
+  const seasonImage = seasonalImageMap[season];
   const monthTitle = format(monthDate, "MMMM");
   const yearTitle = format(monthDate, "yyyy");
+
+  const pointerX = useMotionValue(0);
+  const pointerY = useMotionValue(0);
+
+  const layerXFar = useSpring(useTransform(pointerX, [-1, 1], [-12, 12]), {
+    stiffness: 120,
+    damping: 25,
+    mass: 0.5
+  });
+  const layerYFar = useSpring(useTransform(pointerY, [-1, 1], [-7, 7]), {
+    stiffness: 120,
+    damping: 25,
+    mass: 0.5
+  });
+
+  const layerXMid = useSpring(useTransform(pointerX, [-1, 1], [-24, 24]), {
+    stiffness: 110,
+    damping: 22,
+    mass: 0.52
+  });
+  const layerYMid = useSpring(useTransform(pointerY, [-1, 1], [-12, 12]), {
+    stiffness: 110,
+    damping: 22,
+    mass: 0.52
+  });
+
+  const layerXNear = useSpring(useTransform(pointerX, [-1, 1], [-34, 34]), {
+    stiffness: 100,
+    damping: 20,
+    mass: 0.55
+  });
+  const layerYNear = useSpring(useTransform(pointerY, [-1, 1], [-18, 18]), {
+    stiffness: 100,
+    damping: 20,
+    mass: 0.55
+  });
 
   const days = useMemo(() => {
     const first = startOfWeek(startOfMonth(monthDate));
@@ -98,9 +161,83 @@ export function CalendarWall() {
 
   const scenes = sceneSet(`${monthTitle} ${yearTitle}`);
 
+  const handleParallaxMove: React.MouseEventHandler<HTMLElement> = (event) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    const y = ((event.clientY - rect.top) / rect.height) * 2 - 1;
+    pointerX.set(Math.max(-1, Math.min(1, x)));
+    pointerY.set(Math.max(-1, Math.min(1, y)));
+  };
+
+  const resetParallax = () => {
+    pointerX.set(0);
+    pointerY.set(0);
+  };
+
   return (
-    <section className="mx-auto flex w-full max-w-6xl flex-col items-center gap-10 md:flex-row md:items-start md:justify-center">
-      <div className="relative h-[330px] w-[250px] sm:h-[360px] sm:w-[280px]">
+    <section
+      onMouseMove={handleParallaxMove}
+      onMouseLeave={resetParallax}
+      className="relative isolate min-h-screen w-full"
+    >
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={season}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.45, ease: "easeOut" }}
+          className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
+          aria-hidden="true"
+        >
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.28)_0%,rgba(255,255,255,0.06)_50%,rgba(0,0,0,0.07)_100%)]" />
+
+          <motion.div
+            style={{ x: layerXFar, y: layerYFar }}
+            className="absolute inset-x-[-18%] bottom-[28vh] h-[34vh] opacity-32 md:inset-x-[-14%] md:bottom-[26vh] md:h-[32vh] md:opacity-24"
+          >
+            <div
+              className="h-full w-full bg-contain bg-bottom bg-repeat-x"
+              style={{
+                backgroundImage: `url(${seasonImage})`,
+                backgroundSize: "clamp(260px, 34vw, 480px) auto",
+                maskImage: "linear-gradient(to top, black 10%, transparent 98%)"
+              }}
+            />
+          </motion.div>
+
+          <motion.div
+            style={{ x: layerXMid, y: layerYMid }}
+            className="absolute inset-x-[-20%] bottom-[14vh] h-[40vh] opacity-44 md:inset-x-[-16%] md:bottom-[11vh] md:h-[38vh] md:opacity-34"
+          >
+            <div
+              className="h-full w-full bg-contain bg-bottom bg-repeat-x"
+              style={{
+                backgroundImage: `url(${seasonImage})`,
+                backgroundSize: "clamp(320px, 42vw, 620px) auto",
+                maskImage: "linear-gradient(to top, black 20%, transparent 100%)"
+              }}
+            />
+          </motion.div>
+
+          <motion.div
+            style={{ x: layerXNear, y: layerYNear }}
+            className="absolute inset-x-[-24%] -bottom-[3vh] h-[48vh] opacity-62 md:inset-x-[-20%] md:-bottom-[2vh] md:h-[46vh] md:opacity-44"
+          >
+            <div
+              className="h-full w-full bg-contain bg-bottom bg-repeat-x"
+              style={{
+                backgroundImage: `url(${seasonImage})`,
+                backgroundSize: "clamp(420px, 54vw, 820px) auto",
+                maskImage: "linear-gradient(to top, black 28%, transparent 100%)"
+              }}
+            />
+          </motion.div>
+        </motion.div>
+      </AnimatePresence>
+
+      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col items-center gap-10 px-4 pb-16 pt-8 md:flex-row md:items-start md:justify-center md:px-8 md:pt-14">
+        <div className="relative h-[330px] w-[250px] sm:h-[360px] sm:w-[280px]">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentMonth}
@@ -140,12 +277,12 @@ export function CalendarWall() {
             ))}
           </motion.div>
         </AnimatePresence>
-      </div>
+        </div>
 
-      <motion.div
-        layout
-        className="w-full max-w-[580px] rounded-2xl border border-[#dedede] bg-white/80 p-6 shadow-card backdrop-blur"
-      >
+        <motion.div
+          layout
+          className="w-full max-w-[580px] rounded-2xl border border-[#dedede] bg-white/70 p-6 shadow-card backdrop-blur md:bg-white/80"
+        >
         <div className="mb-6 flex items-center justify-between border-b border-[#ececec] pb-4">
           <AnimatePresence mode="wait">
             <motion.h1
@@ -251,7 +388,7 @@ export function CalendarWall() {
           </motion.div>
         </AnimatePresence>
 
-        <section className="mt-6 border-t border-[#ececec] pt-4">
+          <section className="mt-6 border-t border-[#ececec] pt-4">
           <header className="mb-2 flex items-center gap-2">
             <PencilLine size={16} className="text-[#666666]" />
             <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-[#666666]">Notes</h2>
@@ -275,8 +412,9 @@ export function CalendarWall() {
           >
             Saved locally
           </p>
-        </section>
-      </motion.div>
+          </section>
+        </motion.div>
+      </div>
     </section>
   );
 }
