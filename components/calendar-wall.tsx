@@ -281,9 +281,9 @@ export function CalendarWall() {
 
         <motion.div
           layout
-          className="w-full max-w-[580px] rounded-2xl border border-[#dedede] bg-white/70 p-6 shadow-card backdrop-blur md:bg-white/80"
+          className="w-full max-w-[580px] rounded-2xl border border-[#dedede] bg-white/70 p-4 shadow-card backdrop-blur sm:p-6 md:bg-white/80"
         >
-        <div className="mb-6 flex items-center justify-between border-b border-[#ececec] pb-4">
+        <div className="mb-6 flex flex-col gap-3 border-b border-[#ececec] pb-4 sm:flex-row sm:items-center sm:justify-between">
           <AnimatePresence mode="wait">
             <motion.h1
               key={currentMonth}
@@ -291,17 +291,17 @@ export function CalendarWall() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 12 }}
               transition={{ duration: 0.25 }}
-              className="text-3xl font-semibold tracking-tight text-[#141414]"
+              className="text-3xl font-semibold leading-tight tracking-tight text-[#141414]"
             >
               {monthTitle} <span className="font-light text-[#666666]">{yearTitle}</span>
             </motion.h1>
           </AnimatePresence>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-start sm:self-auto">
             <button
               type="button"
               onClick={goToPreviousMonth}
-              className="rounded-xl border border-[#dfdfdf] p-2 text-[#222222] transition hover:-translate-y-[1px] hover:bg-[#f7f7f7]"
+              className="rounded-xl border border-[#dfdfdf] p-1.5 text-[#222222] transition hover:-translate-y-[1px] hover:bg-[#f7f7f7] sm:p-2"
               aria-label="Previous month"
             >
               <ChevronLeft size={18} />
@@ -309,14 +309,14 @@ export function CalendarWall() {
             <button
               type="button"
               onClick={goToToday}
-              className="rounded-xl border border-[#202020] px-3 py-2 text-xs font-semibold uppercase tracking-wider text-[#202020] transition hover:bg-[#202020] hover:text-white"
+              className="whitespace-nowrap rounded-xl border border-[#202020] px-2.5 py-2 text-xs font-semibold uppercase tracking-wider text-[#202020] transition hover:bg-[#202020] hover:text-white sm:px-3"
             >
               Today
             </button>
             <button
               type="button"
               onClick={goToNextMonth}
-              className="rounded-xl border border-[#dfdfdf] p-2 text-[#222222] transition hover:-translate-y-[1px] hover:bg-[#f7f7f7]"
+              className="rounded-xl border border-[#dfdfdf] p-1.5 text-[#222222] transition hover:-translate-y-[1px] hover:bg-[#f7f7f7] sm:p-2"
               aria-label="Next month"
             >
               <ChevronRight size={18} />
